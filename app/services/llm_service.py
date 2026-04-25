@@ -14,7 +14,8 @@ class LLMService:
 
         self.memory = ConversationBufferMemory(
             memory_key="chat_history",
-            return_messages=True
+            return_messages=True,
+            output_key="answer"
         )
 
     def get_response(self, query, doc_id=None):
@@ -27,11 +28,41 @@ class LLMService:
             chain = ConversationalRetrievalChain.from_llm(
                 llm=self.llm,
                 retriever=retriever,
-                memory=self.memory
+                memory=self.memory,
+                return_source_documents=True
             )
 
             response = chain({"question": query})
-            return response['answer']
+            citations = []
+            seen = set()
+
+            for source_doc in response.get("source_documents", []):
+                metadata = source_doc.metadata or {}
+                source_name = metadata.get("filename") or metadata.get("source") or "Unknown source"
+                page = metadata.get("page", "N/A")
+                page_content = (source_doc.page_content or "").strip().replace("\n", " ")
+                snippet = page_content[:200] + ("..." if len(page_content) > 200 else "")
+                key = (source_name, page)
+
+                if key in seen:
+                    continue
+
+                seen.add(key)
+                citations.append(
+                    {
+                        "source": source_name,
+                        "page": page,
+                        "snippet": snippet,
+                    }
+                )
+
+            return {
+                "answer": response.get("answer", ""),
+                "citations": citations,
+            }
         except Exception as e:
             print(f"Error getting LLM response: {e}")
-            return "I encountered an error processing your request."
+            return {
+                "answer": "I encountered an error processing your request.",
+                "citations": [],
+            }

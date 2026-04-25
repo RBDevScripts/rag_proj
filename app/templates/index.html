@@ -66,7 +66,22 @@
                     body: JSON.stringify({ question: q })
                 });
                 let d = await r.json();
-                document.getElementById('rc').textContent = d.response || d.error;
+                let rc = document.getElementById('rc');
+                if (d.error) {
+                    rc.textContent = d.error;
+                    return;
+                }
+
+                let h = `<div><strong>Answer:</strong><br>${d.response || ''}</div>`;
+                if (d.citations && d.citations.length) {
+                    h += '<hr><div><strong>Sources:</strong><ul>';
+                    for (let c of d.citations) {
+                        let p = c.page !== undefined && c.page !== null ? c.page : 'N/A';
+                        h += `<li><strong>${c.source}</strong> (page: ${p})<br><small>${c.snippet || ''}</small></li>`;
+                    }
+                    h += '</ul></div>';
+                }
+                rc.innerHTML = h;
             } catch (x) {
                 alert('Error');
             }

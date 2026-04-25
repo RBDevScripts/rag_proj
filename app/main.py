@@ -13,7 +13,7 @@ import uuid
 
 app = Flask(__name__)
 vector_store = VectorStore(Config.VECTOR_DB_PATH)
-storage_service = S3Storage()
+storage_service = S3Storage()git
 llm_service = LLMService(vector_store)
 current_doc_id = None
 
@@ -57,6 +57,12 @@ def process_document(file):
             chunk_overlap=200
         )
         text_chunks = text_splitter.split_documents(documents)
+
+        # Normalize source metadata so citations show the original filename.
+        for chunk in text_chunks:
+            metadata = chunk.metadata or {}
+            metadata["filename"] = file.filename
+            chunk.metadata = metadata
         
         return text_chunks, doc_id
         
@@ -137,8 +143,11 @@ def query():
         return jsonify({'error': 'Upload a document before asking questions'}), 400
 
     try:
-        response = llm_service.get_response(data['question'], doc_id=current_doc_id)
-        return jsonify({'response': response})
+        result = llm_service.get_response(data['question'], doc_id=current_doc_id)
+        return jsonify({
+            'response': result.get('answer', ''),
+            'citations': result.get('citations', [])
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
