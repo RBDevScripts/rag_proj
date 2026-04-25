@@ -8,15 +8,21 @@ from langchain_community.document_loaders import TextLoader, PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 import tempfile
 import logging
+import uuid
 
 
 app = Flask(__name__)
 vector_store = VectorStore(Config.VECTOR_DB_PATH)
 storage_service = S3Storage()
 llm_service = LLMService(vector_store)
+current_doc_id = None
 
 @app.route('/')
 def index():
+    global current_doc_id
+    # Reset active document context on browser reload/new session.
+    current_doc_id = None
+    llm_service.memory.clear()
     return render_template('index.html')
 
 
@@ -27,6 +33,7 @@ logger = logging.getLogger(__name__)
 
 def process_document(file):
     """Process document based on file type and return text chunks"""
+    doc_id = str(uuid.uuid4())
     temp_dir = tempfile.mkdtemp()
     temp_path = os.path.join(temp_dir, file.filename)
     
@@ -51,7 +58,7 @@ def process_document(file):
         )
         text_chunks = text_splitter.split_documents(documents)
         
-        return text_chunks
+        return text_chunks, doc_id
         
     finally:
         # Clean up temp file
@@ -63,6 +70,7 @@ def process_document(file):
 @app.route('/upload', methods=['POST'])
 def upload_document():
     try:
+        global current_doc_id
         logger.debug("Upload endpoint called")
         
         if 'file' not in request.files:
@@ -83,7 +91,7 @@ def upload_document():
         
         # Process the document
         try:
-            text_chunks = process_document(file)
+            text_chunks, doc_id = process_document(file)
             logger.debug(f"Document processed into {len(text_chunks)} chunks")
         except Exception as e:
             logger.error(f"Error processing document: {str(e)}")
@@ -100,7 +108,10 @@ def upload_document():
 
         # Add to vector store
         try:
-            vector_store.add_documents(text_chunks)
+            vector_store.reset_store(hard=True)
+            vector_store.add_documents(text_chunks, doc_id=doc_id)
+            current_doc_id = doc_id
+            llm_service.memory.clear()
             logger.debug("Documents added to vector store")
         except Exception as e:
             logger.error(f"Error adding to vector store: {str(e)}")
@@ -122,9 +133,11 @@ def query():
     data = request.json
     if 'question' not in data:
         return jsonify({'error': 'No question provided'}), 400
+    if not current_doc_id:
+        return jsonify({'error': 'Upload a document before asking questions'}), 400
 
     try:
-        response = llm_service.get_response(data['question'])
+        response = llm_service.get_response(data['question'], doc_id=current_doc_id)
         return jsonify({'response': response})
     except Exception as e:
         return jsonify({'error': str(e)}), 500

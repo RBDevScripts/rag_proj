@@ -5,6 +5,7 @@ from config import Config
 
 class LLMService:
     def __init__(self, vector_store):
+        self.vector_store = vector_store
         self.llm = ChatGroq(
             groq_api_key=Config.GROQ_API_KEY,
             model_name="llama-3.1-8b-instant",  # 🔥 best Groq model
@@ -16,15 +17,20 @@ class LLMService:
             return_messages=True
         )
 
-        self.chain = ConversationalRetrievalChain.from_llm(
-            llm=self.llm,
-            retriever=vector_store.vector_store.as_retriever(),
-            memory=self.memory
-        )
-
-    def get_response(self, query):
+    def get_response(self, query, doc_id=None):
         try:
-            response = self.chain({"question": query})
+            if doc_id:
+                retriever = self.vector_store.get_retriever_for_doc(doc_id)
+            else:
+                retriever = self.vector_store.vector_store.as_retriever()
+
+            chain = ConversationalRetrievalChain.from_llm(
+                llm=self.llm,
+                retriever=retriever,
+                memory=self.memory
+            )
+
+            response = chain({"question": query})
             return response['answer']
         except Exception as e:
             print(f"Error getting LLM response: {e}")
