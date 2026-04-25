@@ -13,7 +13,7 @@ import uuid
 
 app = Flask(__name__)
 vector_store = VectorStore(Config.VECTOR_DB_PATH)
-storage_service = S3Storage()git
+storage_service = S3Storage()
 llm_service = LLMService(vector_store)
 current_doc_id = None
 
