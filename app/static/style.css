@@ -1,41 +1,86 @@
-.container {
-    max-width: 800px;
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background-color: #f3f4f6;
+    color: #1f2937;
+    margin: 0;
+    padding: 20px;
+}
+
+.c {
+    max-width: 700px;
     margin: 0 auto;
-    padding: 20px;
 }
 
-.upload-section,
-.query-section,
-.response-section {
+h1 {
+    text-align: center;
+    color: #111827;
     margin-bottom: 30px;
-    padding: 20px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
 }
 
-textarea {
+h2 {
+    font-size: 1.25rem;
+    margin-top: 0;
+    color: #374151;
+    margin-bottom: 15px;
+}
+
+.s {
+    background: #ffffff;
+    margin-bottom: 20px;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.inp {
     width: 100%;
-    height: 100px;
-    margin-bottom: 10px;
-    padding: 10px;
+    padding: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-family: inherit;
+    font-size: 1rem;
+    transition: border-color 0.2s;
 }
 
-button {
-    padding: 10px 20px;
-    background-color: #007bff;
+.inp:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+textarea.inp {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.btn {
+    padding: 12px 24px;
+    background-color: #3b82f6;
     color: white;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
     cursor: pointer;
+    transition: background-color 0.2s;
+    width: 100%;
 }
 
-button:hover {
-    background-color: #0056b3;
+.btn:hover {
+    background-color: #2563eb;
 }
 
-#response-content {
+.out {
     min-height: 100px;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+    padding: 15px;
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    line-height: 1.5;
+    white-space: pre-wrap;
 }

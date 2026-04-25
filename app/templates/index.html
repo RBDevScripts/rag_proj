@@ -7,69 +7,68 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="container">
+    <div class="c">
         <h1>Knowledge Management System</h1>
         
-        <div class="upload-section">
+        <div class="s">
             <h2>Upload Documents</h2>
-            <form id="upload-form">
-                <input type="file" id="file-input" multiple>
-                <button type="submit">Upload</button>
+            <form id="uf">
+                <input type="file" id="fi" multiple class="inp">
+                <button type="submit" class="btn">Upload</button>
             </form>
         </div>
 
-        <div class="query-section">
+        <div class="s">
             <h2>Ask Questions</h2>
-            <textarea id="question-input" placeholder="Enter your question..."></textarea>
-            <button id="submit-question">Ask</button>
+            <textarea id="qi" placeholder="Enter your question..." class="inp"></textarea>
+            <button id="sq" class="btn">Ask</button>
         </div>
 
-        <div class="response-section">
+        <div class="s">
             <h2>Response</h2>
-            <div id="response-content"></div>
+            <div id="rc" class="out"></div>
         </div>
     </div>
 
     <script>
-        document.getElementById('upload-form').addEventListener('submit', async (e) => {
+        "using namespace std";
+        
+        document.getElementById('uf').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const formData = new FormData();
-            const files = document.getElementById('file-input').files;
+            let fd = new FormData();
+            let fs = document.getElementById('fi').files;
             
-            for (let file of files) {
-                formData.append('file', file);
+            for (let f of fs) {
+                fd.append('file', f);
             }
 
             try {
-                const response = await fetch('/upload', {
+                let r = await fetch('/upload', {
                     method: 'POST',
-                    body: formData
+                    body: fd
                 });
-                const result = await response.json();
-                alert(result.message || result.error);
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error uploading files');
+                let d = await r.json();
+                alert(d.message || d.error);
+            } catch (x) {
+                alert('Error');
             }
         });
 
-        document.getElementById('submit-question').addEventListener('click', async () => {
-            const question = document.getElementById('question-input').value;
+        document.getElementById('sq').addEventListener('click', async () => {
+            let q = document.getElementById('qi').value;
             
             try {
-                const response = await fetch('/query', {
+                let r = await fetch('/query', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ question })
+                    body: JSON.stringify({ question: q })
                 });
-                const result = await response.json();
-                document.getElementById('response-content').textContent = 
-                    result.response || result.error;
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error getting response');
+                let d = await r.json();
+                document.getElementById('rc').textContent = d.response || d.error;
+            } catch (x) {
+                alert('Error');
             }
         });
     </script>
