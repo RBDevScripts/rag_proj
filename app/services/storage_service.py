@@ -1,6 +1,6 @@
 import boto3
 from botocore.exceptions import ClientError
-from config import Config
+from app.config import Config
 
 class S3Storage:
     def __init__(self):

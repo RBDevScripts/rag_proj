@@ -1,7 +1,7 @@
 from langchain_groq import ChatGroq
 from langchain_classic.chains import ConversationalRetrievalChain
 from langchain_classic.memory import ConversationBufferMemory
-from config import Config
+from app.config import Config
 
 class LLMService:
     def __init__(self, vector_store):
@@ -32,7 +32,7 @@ class LLMService:
                 return_source_documents=True
             )
 
-            response = chain({"question": query})
+            response = chain.invoke({"question": query})
             citations = []
             seen = set()
 

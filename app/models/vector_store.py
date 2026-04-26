@@ -1,7 +1,7 @@
 from pinecone import Pinecone, ServerlessSpec
 from langchain_pinecone import PineconeVectorStore
 from langchain_openai import OpenAIEmbeddings
-from config import Config
+from app.config import Config
 
 class VectorStore:
     def __init__(self, path):
