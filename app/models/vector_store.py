@@ -1,43 +1,43 @@
-import os
-import shutil
-
-from langchain_chroma import Chroma
+from pinecone import Pinecone, ServerlessSpec
+from langchain_pinecone import PineconeVectorStore
 from langchain_openai import OpenAIEmbeddings
+from config import Config
 
 class VectorStore:
     def __init__(self, path):
-        self.path = path
-        self.embeddings = OpenAIEmbeddings()
-        self._create_store()
+        self.path = path  # Kept for compatibility with existing constructor usage.
+        self.namespace = Config.PINECONE_NAMESPACE
+        self.index_name = Config.PINECONE_INDEX_NAME
+        self.embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
+        self.pc = Pinecone(api_key=Config.PINECONE_API_KEY)
+        self._ensure_index()
+        self.index = self.pc.Index(self.index_name)
+        self.vector_store = PineconeVectorStore(
+            index=self.index,
+            embedding=self.embeddings,
+            namespace=self.namespace
+        )
 
-    def _create_store(self):
-        self.vector_store = Chroma(
-            persist_directory=self.path,
-            embedding_function=self.embeddings
+    def _ensure_index(self):
+        existing_indexes = self.pc.list_indexes().names()
+        if self.index_name in existing_indexes:
+            return
+
+        self.pc.create_index(
+            name=self.index_name,
+            dimension=1536,
+            metric="cosine",
+            spec=ServerlessSpec(cloud="aws", region=Config.PINECONE_REGION)
         )
 
     def reset_store(self, hard=False):
-        # Replace-mode indexing: remove old vectors before a new upload.
-        if hard:
-            try:
-                self.vector_store.delete_collection()
-            except Exception:
-                pass
-
-            if os.path.isdir(self.path):
-                for name in os.listdir(self.path):
-                    item_path = os.path.join(self.path, name)
-                    if os.path.isdir(item_path):
-                        shutil.rmtree(item_path, ignore_errors=True)
-                    else:
-                        try:
-                            os.remove(item_path)
-                        except OSError:
-                            pass
-        else:
-            self.vector_store.delete_collection()
-
-        self._create_store()
+        # Keep existing app behavior: clear all vectors before a new upload.
+        try:
+            self.index.delete(delete_all=True, namespace=self.namespace)
+        except Exception as exc:
+            # First upload can hit a missing namespace; treat it as already empty.
+            if "Namespace not found" not in str(exc):
+                raise
 
     def add_documents(self, documents, doc_id):
         for doc in documents:
