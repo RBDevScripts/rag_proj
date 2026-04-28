@@ -14,5 +14,4 @@ langchain-pinecone>=0.2.0
 
 pinecone>=5.0.0
 pypdf>=4.0.0
-tiktoken>=0.7.0
-unstructured>=0.15.0
+tiktoken>=0.7.0unstructured>=0.15.0

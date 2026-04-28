@@ -11,10 +11,10 @@
         <h1>Knowledge Management System</h1>
         
         <div class="s">
-            <h2>Upload Documents</h2>
-            <form id="uf">
-                <input type="file" id="fi" multiple class="inp">
-                <button type="submit" class="btn">Upload</button>
+            <h2>Index Git Repository</h2>
+            <form id="repo-form">
+                <input type="url" id="repo-url" class="inp" placeholder="Enter public Git repository URL" required>
+                <button type="submit" class="btn">Index Repo</button>
             </form>
         </div>
 
@@ -31,26 +31,26 @@
     </div>
 
     <script>
-        "using namespace std";
-        
-        document.getElementById('uf').addEventListener('submit', async (e) => {
+        document.getElementById('repo-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            let fd = new FormData();
-            let fs = document.getElementById('fi').files;
-            
-            for (let f of fs) {
-                fd.append('file', f);
-            }
+            let repoUrl = document.getElementById('repo-url').value.trim();
 
             try {
-                let r = await fetch('/upload', {
+                let r = await fetch('/ingest-repo', {
                     method: 'POST',
-                    body: fd
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ repo_url: repoUrl })
                 });
                 let d = await r.json();
-                alert(d.message || d.error);
+                if (!r.ok) {
+                    alert(d.detail || 'Failed to index repository');
+                    return;
+                }
+                alert(`${d.message}. Indexed ${d.files_indexed} files into ${d.chunks_processed} chunks.`);
             } catch (x) {
-                alert('Error');
+                alert('Error indexing repository');
             }
         });
 
@@ -67,8 +67,8 @@
                 });
                 let d = await r.json();
                 let rc = document.getElementById('rc');
-                if (d.error) {
-                    rc.textContent = d.error;
+                if (!r.ok) {
+                    rc.textContent = d.detail || 'Unable to answer question';
                     return;
                 }
 
